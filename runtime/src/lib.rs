@@ -1,10 +1,11 @@
-#![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(not(feature = "std"), no_std)] //表示编译时如果feature不是std（Rust标准库），那么必须是no_std（编译为Wasm）
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
-#![recursion_limit="256"]
+#![recursion_limit="256"] //设置编译时可能出现的无限递归操作的最大数量。
 
 // Make the WASM binary available.
+// 表示当使用Rust标准库编译时，将生成的Wasm二进制内容通过常量的方式引入到当前runtime代码中。
 #[cfg(feature = "std")]
-include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
+include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs")); //
 
 use sp_std::prelude::*;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -39,7 +40,7 @@ pub use frame_support::{
 };
 use pallet_transaction_payment::CurrencyAdapter;
 
-/// Import the template pallet.
+/// 1.Import the template pallet.
 pub use pallet_template;
 
 /// An index to a block.
@@ -109,7 +110,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 /// up by `pallet_aura` to implement `fn slot_duration()`.
 ///
 /// Change this to adjust the block time.
-pub const MILLISECS_PER_BLOCK: u64 = 6000;
+pub const MILLISECS_PER_BLOCK: u64 = 6000; // 即每个区块的生产时间是6秒，可以根据需要修改配置
 
 pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
@@ -129,6 +130,7 @@ pub fn native_version() -> NativeVersion {
 
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
+// 使用parameter_types!宏生成一些功能模块所需的满足Get接口的数据类型
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 	pub const BlockHashCount: BlockNumber = 2400;
@@ -259,12 +261,14 @@ impl pallet_sudo::Config for Runtime {
 	type Call = Call;
 }
 
-/// Configure the template pallet in pallets/template.
+/// 2.Configure the template pallet in pallets/template.
 impl pallet_template::Config for Runtime {
 	type Event = Event;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
+// runtime由construct_runtime!宏构建：
+// construct_runtime!宏根据模块名称和所用的模块内的组件来构造runtime，构造时按照顺序加载初始存储，所以当B模块依赖A模块时，应当将A模块放在B之前。
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -317,6 +321,7 @@ pub type Executive = frame_executive::Executive<
 	AllModules,
 >;
 
+// 使用impl_runtime_apis!宏实现runtime api定义的接口，这些接口通过decl_runtime_apis!宏进行定义
 impl_runtime_apis! {
 	impl sp_api::Core<Block> for Runtime {
 		fn version() -> RuntimeVersion {

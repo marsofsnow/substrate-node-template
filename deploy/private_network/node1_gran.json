@@ -1,0 +1,10 @@
+{
+  "jsonrpc":"2.0",
+  "id":1,
+  "method":"author_insertKey",
+  "params": [
+    "gran",
+    "fortune churn emerge mushroom shoe rally valley fat can cute parent curious",
+    "0x56dadb21dafec61bc08641f0bb76cfe5e56a566a29b59571d2a986a523dd9db0"
+  ]
+}

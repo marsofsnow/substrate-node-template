@@ -4,14 +4,18 @@
 /// Learn more about FRAME and the core library of Substrate FRAME pallets:
 /// https://substrate.dev/docs/en/knowledgebase/runtime/frame
 
-use frame_support::{decl_module, decl_storage, decl_event, decl_error, dispatch, traits::Get};
+use frame_support::{decl_module, decl_storage, decl_event, decl_error, dispatch,debug, traits::Get,ensure};
 use frame_system::ensure_signed;
+use sp_runtime::print;
+use sp_std::prelude::*;
 
 #[cfg(test)]
 mod mock;
 
 #[cfg(test)]
 mod tests;
+
+pub const MAX_MEMBERS:usize = 16 ;
 
 /// Configure the pallet by specifying the parameters and types on which it depends.
 pub trait Config: frame_system::Config {
@@ -29,6 +33,20 @@ decl_storage! {
 		// Learn more about declaring storage items:
 		// https://substrate.dev/docs/en/knowledgebase/runtime/storage#declaring-storage-items
 		Something get(fn something): Option<u32>;
+        /*
+        这段代码包含的要点有：
+        SimpleMap：存储数据的HashMap名称；
+        get(fn simple_map)：一个getter函数，返回从哈希表中获取的值；
+        map hasher(blake2_128_concat)：声明使用的哈希表类型，这里使用的是blake2_128_concat hasher；
+        T::AccountId => u32：哈希表的键和值的数据类型，这里是键的类型是AccountId，值的类型是u32；
+
+        Substrate提供三种哈希表类型：blake2_128_concat、twox_64_concat、identity，一般使用blake2_128_concat即可。
+        */
+        SimpleMap get(fn simple_map):map hasher(blake2_128_concat) T::AccountId=>u32;
+
+
+        Members get(fn members):Vec<T::AccountId>;
+
 	}
 }
 
@@ -39,6 +57,9 @@ decl_event!(
 		/// Event documentation should end with an array that provides descriptive names for event
 		/// parameters. [something, who]
 		SomethingStored(u32, AccountId),
+        EmitInput(AccountId,u32),
+        MemberAdded(AccountId),
+        MemberRemoved(AccountId),
 	}
 );
 
@@ -49,6 +70,10 @@ decl_error! {
 		NoneValue,
 		/// Errors should have helpful documentation associated with them.
 		StorageOverflow,
+
+        AlreadyMember,
+        NotMember,
+        MembershipLimitReached,
 	}
 }
 
@@ -62,6 +87,62 @@ decl_module! {
 
 		// Events must be initialized if they are used by the pallet.
 		fn deposit_event() = default;
+
+
+        #[weight = 10_000]
+        pub fn add_member(origin)->dispatch::DispatchResult{
+            let new_member = ensure_signed(origin)?;
+            let mut members = Members::<T>::get();
+            ensure!(members.len()<MAX_MEMBERS,Error::<T>::MembershipLimitReached);
+            match members.binary_search(&new_member){
+                Ok(_)=> Err(Error::<T>::AlreadyMember.into()),
+                Err(index)=>{
+                    members.insert(index,new_member.clone());
+                    Members::<T>::put(members);
+                    Self::deposit_event(RawEvent::MemberAdded(new_member));
+                    Ok(())
+
+                }
+            }
+        }
+
+        #[weight = 10_000]
+		fn remove_member(origin) -> dispatch::DispatchResult {
+			let old_member = ensure_signed(origin)?;
+			let mut members = Members::<T>::get();
+
+			match members.binary_search(&old_member) {
+				Ok(index) => {
+					members.remove(index);
+					Members::<T>::put(members);
+					Self::deposit_event(RawEvent::MemberRemoved(old_member));
+					Ok(())
+				},
+				Err(_) => Err(Error::<T>::NotMember.into()),
+			}
+		}
+
+
+
+        #[weight = 10_000]
+		pub fn say_hello(origin) -> dispatch::DispatchResult {
+			let caller = ensure_signed(origin)?;
+			print("Hello World");
+			debug::info!("Request sent by: {:?}", caller);
+			Ok(())
+		}
+
+        #[weight = 10_000]
+        fn set_single_entry(origin,entry:u32)->dispatch::DispatchResult {
+            let user = ensure_signed(origin)?;
+            <SimpleMap<T>>::insert(&user,entry);
+            Self::deposit_event(RawEvent::EmitInput(user,entry));//  触发事件
+            Ok(())
+        }
+
+
+
+
 
 		/// An example dispatchable that takes a singles value as a parameter, writes the value to
 		/// storage and emits an event. This function must be dispatched by a signed extrinsic.

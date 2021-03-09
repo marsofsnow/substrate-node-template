@@ -21,17 +21,21 @@ version = '2.0.0'
 [dependencies]
 frame-support = { default-features = false, version = '3.0.0' }
 frame-system = { default-features = false, version = '3.0.0' }
+sp-runtime = { default-features = false, version = '3.0.0' }
+sp-std = { default-features = false, version = '3.0.0' }
 
 [dev-dependencies]
 serde = { version = "1.0.119" }
 sp-core = { default-features = false, version = '3.0.0' }
 sp-io = { default-features = false, version = '3.0.0' }
 sp-runtime = { default-features = false, version = '3.0.0' }
-
+sp-std = { default-features = false, version = '3.0.0' }
+# features默认使用std feature，保证runtime既可以编译为native版本（使用std feature），也可以编译为wasm版本（使用no_std feature）
 [features]
 default = ['std']
 std = [
     'codec/std',
     'frame-support/std',
     'frame-system/std',
+    'sp-runtime/std',
 ]
