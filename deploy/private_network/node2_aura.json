@@ -1,0 +1,10 @@
+{
+  "jsonrpc":"2.0",
+  "id":1,
+  "method":"author_insertKey",
+  "params": [
+    "aura",
+    "day lumber clip wear century elite light rival barely relief tag pledge",
+    "0xcf015e0ddfc47d1897e0c09ea67d9d5edd8d5e8f9d1683032bace30e33ae6bc6"
+  ]
+}
