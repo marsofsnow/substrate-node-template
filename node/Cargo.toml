@@ -8,14 +8,18 @@ license = 'Unlicense'
 name = 'node-template'
 repository = 'https://github.com/substrate-developer-hub/substrate-node-template/'
 version = '3.0.0'
+
 # 使用[[bin]]表示这个包是可执行的
+
 [[bin]]
 name = 'node-template'
 
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
 
+
 # 通过[build-dependencies]引入编译时的依赖，在build.rs中使用
+
 [build-dependencies]
 substrate-build-script-utils = '3.0.0'
 
