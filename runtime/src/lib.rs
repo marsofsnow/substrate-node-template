@@ -1,5 +1,5 @@
-#![cfg_attr(not(feature = "std"), no_std)]
 //表示编译时如果feature不是std（Rust标准库），那么必须是no_std（编译为Wasm）
+#![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"] //设置编译时可能出现的无限递归操作的最大数量。
 
@@ -43,6 +43,7 @@ use pallet_transaction_payment::CurrencyAdapter;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{Perbill, Permill};
 
+pub use pallet_mystruct;
 /// 1.Import the template pallet.
 pub use pallet_template;
 pub use pallet_token; // add new
@@ -273,6 +274,10 @@ impl pallet_token::Config for Runtime {
     type Event = Event;
 }
 
+impl pallet_mystruct::Config for Runtime {
+    type Event = Event;
+}
+
 // Create the runtime by composing the FRAME pallets that were previously configured.
 // runtime由construct_runtime!宏构建：
 // construct_runtime!宏根据模块名称和所用的模块内的组件来构造runtime，构造时按照顺序加载初始存储，所以当B模块依赖A模块时，应当将A模块放在B之前。
@@ -292,7 +297,8 @@ construct_runtime!(
         Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
         // Include the custom logic from the template pallet in the runtime.
         TemplateModule: pallet_template::{Module, Call, Storage, Event<T>},
-        Token:pallet_token::{Module,Call,Storage,Event<T>}
+        Token:pallet_token::{Module,Call,Storage,Event<T>},
+        NestedStructs:pallet_mystruct::{Module,Call,Storage,Event<T>}
     }
 );
 
@@ -306,7 +312,7 @@ pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 pub type SignedBlock = generic::SignedBlock<Block>;
 /// BlockId type as expected by this runtime.
 pub type BlockId = generic::BlockId<Block>;
-/// The SignedExtension to the basic transaction logic.
+/// The SignedExtension to the basic transaction logic.是个元组
 pub type SignedExtra = (
     frame_system::CheckSpecVersion<Runtime>,
     frame_system::CheckTxVersion<Runtime>,

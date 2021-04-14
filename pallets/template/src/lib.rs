@@ -29,7 +29,7 @@ pub const MAX_MEMBERS: usize = 16;
 pub trait Config: frame_system::Config {
     /// Because this pallet emits events, it depends on the runtime's definition of an event.
     type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
-    type RandomnessSource: Randomness<H256>;
+    type RandomnessSource: Randomness<H256>; //只是定义了一个类型
 }
 
 // The pallet's runtime storage items.
@@ -209,7 +209,9 @@ decl_module! {
     }
 }
 
+//定义一个结构体方法
 impl<T: Config> Module<T> {
+    // 返回随机数的主题参数，每次+1
     fn encode_and_update_nonce() -> Vec<u8> {
         let nonce = Nonce::get();
         Nonce::put(nonce.wrapping_add(1));

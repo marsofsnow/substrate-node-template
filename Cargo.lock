@@ -3525,6 +3525,7 @@ dependencies = [
  "pallet-aura",
  "pallet-balances",
  "pallet-grandpa",
+ "pallet-mystruct",
  "pallet-randomness-collective-flip",
  "pallet-sudo",
  "pallet-template",

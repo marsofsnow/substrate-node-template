@@ -31,29 +31,7 @@ pub trait Config: system::Config + balances::Config {
     type Event: From<Event<Self>> + Into<<Self as frame_system::Config>::Event>;
 }
 
-decl_module! {
-    pub struct Module<T:Config> for enum Call where origin:T::Origin{
-        fn deposit_event()=default;
-
-        #[weight=10_000]
-        // 为了使token可用，账户必须初始化它，初始化token有很多方法，如进行创世（genesis）配置、声明存储过程、lockdrop等。
-        // 这里使用一个非常简单的方法，第一个调用init函数的账户将收到所有token，类似于在EOISO区块链上发行通证时调用issue Action。
-        fn helloword(origin)->DispatchResult{
-            let sender = ensure_signed(origin)?;
-            Ok(())
-
-        }
-
-    }
-}
-
-decl_error! {
-    pub enum Error for Module<T:Config>{
-        AlreadInitialized,
-        InsufficientFunds,
-    }
-}
-
+//  自定义结构体且是范型
 #[derive(Encode, Decode, Clone, Default, RuntimeDebug)]
 pub struct InnerThing<Hash, Balance> {
     number: u32,
@@ -68,13 +46,69 @@ pub struct SuperThing<Hash, Balance> {
     inner_thing: InnerThing<Hash, Balance>,
 }
 
+decl_module! {
+    pub struct Module<T:Config> for enum Call where origin:T::Origin{
+        fn deposit_event()=default;
+
+        #[weight=10_000]
+        fn insert_inner_thing(origin,number:u32,hash: T::Hash, balance:T::Balance)->DispatchResult{
+            let _ = ensure_signed(origin)?;
+            let thing = InnerThing{number:number,hash:hash,balance:balance};
+            <InnerThingsByNumbers<T>>::insert(number,thing);
+            Self::deposit_event(RawEvent::NewInnerThing(number,hash,balance));
+
+            Ok(())
+        }
+
+        #[weight = 10_000]
+        fn insert_super_thing_with_existing_inner(origin, inner_number: u32, super_number: u32)->DispatchResult {
+            let _ = ensure_signed(origin)?;
+            let inner_thing = Self::inner_things_by_numbers(inner_number); //注意这里使用storge里面设置的get函数
+            let super_thing = SuperThing {
+                super_number,
+                inner_thing: inner_thing.clone(),
+            };
+            <SuperThingsBySuperNumbers<T>>::insert(super_number, super_thing);
+            Self::deposit_event(RawEvent::NewSuperThingByExistingInner(super_number, inner_thing.number, inner_thing.hash, inner_thing.balance));
+            Ok(())
+        }
+
+
+        #[weight = 10_000]
+        fn insert_super_thing_with_new_inner(origin, inner_number: u32, hash: T::Hash, balance: T::Balance, super_number: u32) -> DispatchResult {
+            let _ = ensure_signed(origin)?;
+            let inner_thing = InnerThing {
+                number: inner_number,
+                hash,
+                balance,
+            };
+            <InnerThingsByNumbers<T>>::insert(inner_number, inner_thing.clone());
+            Self::deposit_event(RawEvent::NewInnerThing(inner_number, hash, balance));
+            let super_thing = SuperThing {
+                super_number,
+                inner_thing,
+            };
+            <SuperThingsBySuperNumbers<T>>::insert(super_number, super_thing);
+            Self::deposit_event(RawEvent::NewSuperThingByNewInner(super_number, inner_number, hash, balance));
+            Ok(())
+        }
+
+
+    }
+}
+
+decl_error! {
+    pub enum Error for Module<T:Config>{
+        AlreadInitialized,
+        InsufficientFunds,
+    }
+}
+
 decl_storage! {
-    trait Store for Module<T: Config> as Token {
-        //每个持有token的账户在该映射中均表示为键（key），其值（value）就是其持有的token数量。
-        pub Balances get(fn get_balance):map hasher(blake2_128_concat) T::AccountId=>u64;
-        // TotalSupply设置token的总供应量，
-        pub TotalSupply get(fn total_supply):u64=21000000;
-        // Init跟踪token是否已初始化。
-        Init get(fn is_init):bool;
+    trait Store for Module<T: Config> as NestedStructs {
+        InnerThingsByNumbers get(fn inner_things_by_numbers):map hasher(blake2_128_concat) u32 => InnerThingOf<T>;
+
+        SuperThingsBySuperNumbers get(fn super_things_by_super_numbers):  map hasher(blake2_128_concat) u32 => SuperThing<T::Hash, T::Balance>;
+
     }
 }

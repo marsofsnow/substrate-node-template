@@ -17,7 +17,7 @@ default-features = false
 features = ['derive']
 package = 'parity-scale-codec'
 version = '2.0.0'
-
+# [dependencies]是模块的依赖库，[features]默认使用std feature，保证runtime既可以编译为native版本（使用std feature），也可以编译为wasm版本（使用no_std feature）
 [dependencies]
 frame-support = { default-features = false, version = '3.0.0' }
 frame-system = { default-features = false, version = '3.0.0' }

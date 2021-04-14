@@ -1,5 +1,7 @@
 use substrate_wasm_builder::WasmBuilder;
 
+// 使用wasm-builder-runner将当前的runtime项目编译为Wasm二进制文件，该文件位于target/release/wbuild/node-template-runtime/node_template_runtime.compact.wasm。
+
 fn main() {
     WasmBuilder::new()
         .with_current_project()
